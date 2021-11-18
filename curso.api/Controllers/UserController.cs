@@ -2,7 +2,11 @@
 using curso.api.Models;
 using curso.api.Models.Users;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Annotations;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace curso.api.Controllers
 {
@@ -23,16 +27,37 @@ namespace curso.api.Controllers
         [CustomModelStateValidation]
         public IActionResult Create(LoginViewModelInput loginViewModelInput)
         {
-            if(!ModelState.IsValid)
+            var userViewModelOutput = new UserViewModelOutput()
             {
-                return BadRequest(
-                    new FieldValidatorViewModelOutput(
-                        ModelState.SelectMany(selected => selected.Value.Errors)
-                        .Select(s => s.ErrorMessage)
-                    )
-                );
-            }
-            return Ok(loginViewModelInput);
+                Code = 1,
+                Login = "JorgeJun",
+                Email = "jorgejun@email.com"
+            };
+
+            var secret = Encoding.ASCII.GetBytes("eyJsb2dpbiI6InRlc3RlIiwic2VuaGEiOiJ0ZXN0ZTEyMyJ9");
+            var symmetricSecurityKey = new SymmetricSecurityKey(secret);
+            var securityTokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, userViewModelOutput.Code.ToString()),
+                    new Claim(ClaimTypes.Name, userViewModelOutput.Login.ToString()),
+                    new Claim(ClaimTypes.Email, userViewModelOutput.Email.ToString()),
+                }),
+                Expires = DateTime.UtcNow.AddDays(1),
+                SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            var tokenGenerated = jwtSecurityTokenHandler.CreateToken(securityTokenDescriptor);
+
+            var token = jwtSecurityTokenHandler.WriteToken(tokenGenerated);
+
+            return Ok(new
+            {
+                Token = token,
+                User= userViewModelOutput
+            });
         }
 
         [HttpPost]

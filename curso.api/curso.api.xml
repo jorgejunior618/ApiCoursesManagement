@@ -4,6 +4,19 @@
         <name>curso.api</name>
     </assembly>
     <members>
+        <member name="M:curso.api.Controllers.CourseController.Create(curso.api.Models.Courses.CourseViewModelInput)">
+            <summary>
+            O serviço permite adicionar cursos ao usuário cadastrado
+            </summary>
+            <param name="courseViewModelInput"> View Model do Login</param>
+            <returns>Retorna Created se os dados informados o tokem estiverem corretos</returns>
+        </member>
+        <member name="M:curso.api.Controllers.CourseController.Get">
+            <summary>
+            O serviço permite listar cursos do usuário cadastrado
+            </summary>
+            <returns>Retorna Ok se o token estiver correto</returns>
+        </member>
         <member name="M:curso.api.Controllers.UserController.Create(curso.api.Models.Users.LoginViewModelInput)">
             <summary>
             O serviço permite autenticar os usuários cadastrados
