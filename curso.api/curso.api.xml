@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>curso.api</name>
+    </assembly>
+    <members>
+        <member name="M:curso.api.Controllers.UserController.Create(curso.api.Models.Users.LoginViewModelInput)">
+            <summary>
+            O serviço permite autenticar os usuários cadastrados
+            </summary>
+            <param name="loginViewModelInput"> View Model do Login</param>
+            <returns>Retorna Ok se as credenciais enviadas estiverem corretas</returns>
+        </member>
+    </members>
+</doc>
