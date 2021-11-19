@@ -43,7 +43,7 @@ namespace curso.api.Controllers
         [HttpPost]
         [Route("Login")]
         [CustomModelStateValidation]
-        public IActionResult Create(LoginViewModelInput loginViewModelInput)
+        public IActionResult Login(LoginViewModelInput loginViewModelInput)
         {
             User user = _userRepository.GetUser(loginViewModelInput.Login);
 
