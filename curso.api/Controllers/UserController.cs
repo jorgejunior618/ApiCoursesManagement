@@ -1,6 +1,9 @@
 ﻿using curso.api.Busines.Entities;
+using curso.api.Busines.Repositories;
+using curso.api.Configurations;
 using curso.api.Filters;
 using curso.api.Infrastructure.Data;
+using curso.api.Infrastructure.Data.Repositories;
 using curso.api.Models;
 using curso.api.Models.Users;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +20,18 @@ namespace curso.api.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private IUserRepository _userRepository;
+        private IAuthenticationService _authentication;
+
+        public UserController(
+            IUserRepository userRepository,
+            IAuthenticationService authentication
+        )
+        {
+            _userRepository = userRepository;
+            _authentication = authentication;
+        }
+
         /// <summary>
         /// O serviço permite autenticar os usuários cadastrados
         /// </summary>
@@ -30,31 +45,24 @@ namespace curso.api.Controllers
         [CustomModelStateValidation]
         public IActionResult Create(LoginViewModelInput loginViewModelInput)
         {
+            User user = _userRepository.GetUser(loginViewModelInput.Login);
+
+            if (user == null)
+            {
+                return BadRequest("Erro ao tentar Logar");
+            }
+            //if (user.Password != loginViewModelInput.Password.)
+            //{
+
+            //}
             var userViewModelOutput = new UserViewModelOutput()
             {
-                Code = 1,
-                Login = "JorgeJun",
-                Email = "jorgejun@email.com"
+                Code = user.Code,
+                Login = user.Login,
+                Email = user.Email
             };
 
-            var secret = Encoding.ASCII.GetBytes("eyJsb2dpbiI6InRlc3RlIiwic2VuaGEiOiJ0ZXN0ZTEyMyJ9");
-            var symmetricSecurityKey = new SymmetricSecurityKey(secret);
-            var securityTokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, userViewModelOutput.Code.ToString()),
-                    new Claim(ClaimTypes.Name, userViewModelOutput.Login.ToString()),
-                    new Claim(ClaimTypes.Email, userViewModelOutput.Email.ToString()),
-                }),
-                Expires = DateTime.UtcNow.AddDays(1),
-                SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-            var tokenGenerated = jwtSecurityTokenHandler.CreateToken(securityTokenDescriptor);
-
-            var token = jwtSecurityTokenHandler.WriteToken(tokenGenerated);
+            var token = _authentication.GetToken(userViewModelOutput);
 
             return Ok(new
             {
@@ -63,22 +71,27 @@ namespace curso.api.Controllers
             });
         }
 
+        /// <summary>
+        /// Este serviço realiza o cadastro de um novo usuário no banco de dados
+        /// </summary>
+        /// <param name="registerViewModelInput">View model de Cadastro</param>
+        /// <returns></returns>
+        [SwaggerResponse(statusCode: 200, description: "Autenticação bem sucedida", Type = typeof(LoginViewModelInput))]
+        [SwaggerResponse(statusCode: 400, description: "Login ou senha inválida", Type = typeof(FieldValidatorViewModelOutput))]
+        [SwaggerResponse(statusCode: 500, description: "Erro nos servidores, tente novamente mais tarde", Type = typeof(GenericErrorViewModel))]
         [HttpPost]
         [Route("Registrar")]
         [CustomModelStateValidation]
         public IActionResult Registrar(RegisterViewModelInput registerViewModelInput)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<CourseDbContext>();
-            optionsBuilder.UseSqlServer("Server=localhost;Database=CURSO;user=sa;password=App@223020");
+            
 
-            CourseDbContext context = new CourseDbContext(optionsBuilder.Options);
+            //var pendingMigrations = context.Database.GetPendingMigrations();
 
-            var pendingMigrations = context.Database.GetPendingMigrations();
-
-            if( pendingMigrations.Count() > 0)
+            /*if( pendingMigrations.Count() > 0)
             {
                 context.Database.Migrate();
-            }
+            }*/
 
             var user = new User();
 
@@ -86,8 +99,9 @@ namespace curso.api.Controllers
             user.Login = registerViewModelInput.Login;
             user.Password = registerViewModelInput.Password;
 
-            context.User.Add(user);
-            context.SaveChanges();
+
+            _userRepository.Add(user);
+            _userRepository.Commit();
 
             return Created("", registerViewModelInput);
         }

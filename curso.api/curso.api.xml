@@ -24,5 +24,12 @@
             <param name="loginViewModelInput"> View Model do Login</param>
             <returns>Retorna Ok se as credenciais enviadas estiverem corretas</returns>
         </member>
+        <member name="M:curso.api.Controllers.UserController.Registrar(curso.api.Models.Users.RegisterViewModelInput)">
+            <summary>
+            Este serviço realiza o cadastro de um novo usuário no banco de dados
+            </summary>
+            <param name="registerViewModelInput">View model de Cadastro</param>
+            <returns></returns>
+        </member>
     </members>
 </doc>
