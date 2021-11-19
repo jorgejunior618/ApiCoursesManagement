@@ -1,7 +1,10 @@
-﻿using curso.api.Filters;
+﻿using curso.api.Busines.Entities;
+using curso.api.Filters;
+using curso.api.Infrastructure.Data;
 using curso.api.Models;
 using curso.api.Models.Users;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Annotations;
 using System.IdentityModel.Tokens.Jwt;
@@ -65,6 +68,27 @@ namespace curso.api.Controllers
         [CustomModelStateValidation]
         public IActionResult Registrar(RegisterViewModelInput registerViewModelInput)
         {
+            var optionsBuilder = new DbContextOptionsBuilder<CourseDbContext>();
+            optionsBuilder.UseSqlServer("Server=localhost;Database=CURSO;user=sa;password=App@223020");
+
+            CourseDbContext context = new CourseDbContext(optionsBuilder.Options);
+
+            var pendingMigrations = context.Database.GetPendingMigrations();
+
+            if( pendingMigrations.Count() > 0)
+            {
+                context.Database.Migrate();
+            }
+
+            var user = new User();
+
+            user.Email = registerViewModelInput.Email;
+            user.Login = registerViewModelInput.Login;
+            user.Password = registerViewModelInput.Password;
+
+            context.User.Add(user);
+            context.SaveChanges();
+
             return Created("", registerViewModelInput);
         }
     }
